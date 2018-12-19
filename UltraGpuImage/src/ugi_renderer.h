@@ -19,10 +19,25 @@ public:
 
     void OnSurfaceDestroyed();
 
-    void RenderFrame(GLuint texture_id, int32_t width, int32_t height, int64_t timestamp);
+    void RenderRgb(GLuint texture_id, int32_t width, int32_t height, int64_t timestamp);
+
+    void RenderOes(GLuint texture_id, int32_t width, int32_t height, int64_t timestamp);
 
 private:
-    GLuint program_;
+    enum TextureType {
+        kTextureTypeRgb,
+        kTextureTypeOes,
+        kTextureTypeMax,
+    };
+
+    void prepareShader(TextureType type);
+
+    GLenum textureType(TextureType type);
+
+    void renderTexture(TextureType type, GLuint texture_id, int32_t width, int32_t height,
+                       int64_t timestamp);
+
+    GLuint programs_[kTextureTypeMax];
     GLuint vao_;
     GLuint vbo_;
     GLuint ebo_;

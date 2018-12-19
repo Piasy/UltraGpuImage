@@ -60,7 +60,10 @@ public class UgiRenderer {
 
     private static native void nativeOnSurfaceDestroyed(long handle);
 
-    private static native void nativeRenderFrame(long handle, int textureId, int width, int height,
+    private static native void nativeRenderRgb(long handle, int textureId, int width, int height,
+            long timestamp);
+
+    private static native void nativeRenderOes(long handle, int textureId, int width, int height,
             long timestamp);
 
     private static native void nativeDestroy(long handle);
@@ -100,13 +103,26 @@ public class UgiRenderer {
         logInfo("onSurfaceDestroyed success");
     }
 
-    public void renderFrame(int textureId, int width, int height, long timestamp) {
+    public void renderRgb(int textureId, int width, int height, long timestamp) {
         mRenderHandler.post(() -> {
             if (mNativeHandle != 0) {
-                nativeRenderFrame(mNativeHandle, textureId, width, height, timestamp);
+                nativeRenderRgb(mNativeHandle, textureId, width, height, timestamp);
                 mEglBase.swapBuffers(timestamp);
             }
         });
+    }
+
+    public void renderOes(int textureId, int width, int height, long timestamp) {
+        mRenderHandler.post(() -> {
+            if (mNativeHandle != 0) {
+                nativeRenderOes(mNativeHandle, textureId, width, height, timestamp);
+                mEglBase.swapBuffers(timestamp);
+            }
+        });
+    }
+
+    public void runOnRenderThread(Runnable runnable) {
+        mRenderHandler.post(runnable);
     }
 
     public void destroy() {

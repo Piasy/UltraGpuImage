@@ -8,7 +8,7 @@
 #if defined(__ANDROID__)
 
 #include <GLES3/gl3.h>
-#include <GLES3/gl3ext.h>
+#include <GLES2/gl2ext.h> // https://stackoverflow.com/q/31003863/3077508
 
 #elif defined(__APPLE__)
 
