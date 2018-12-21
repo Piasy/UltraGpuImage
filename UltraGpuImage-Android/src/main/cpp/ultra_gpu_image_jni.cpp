@@ -1,12 +1,29 @@
 #include <jni.h>
+#include <android/log.h>
 
 #include "ugi_renderer.h"
 #include "ugi_transformation.h"
+#include "ugi_logging.h"
 
 extern "C" {
 
+static bool g_log_func_set_ = false;
+
+static void ugi_android_log(int level, const char* log) {
+    if (level == UGI_LOG_LEVEL_ERROR) {
+        __android_log_write(ANDROID_LOG_ERROR, "ugi", log);
+    } else {
+        __android_log_write(ANDROID_LOG_INFO, "ugi", log);
+    }
+}
+
 JNIEXPORT jlong JNICALL
 Java_com_piasy_ugi_UgiRenderer_nativeCreate(JNIEnv* env, jclass type, jlong nativeTransformation) {
+    if (!g_log_func_set_) {
+        g_log_func_set_ = true;
+        ugi_set_log_func(ugi_android_log);
+    }
+
     Ugi::Transformation* transformation
             = reinterpret_cast<Ugi::Transformation*>(nativeTransformation);
     if (transformation) {

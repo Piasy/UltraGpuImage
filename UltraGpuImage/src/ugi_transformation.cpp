@@ -4,6 +4,8 @@
 
 #include "ugi_transformation.h"
 
+#include <sstream>
+
 namespace Ugi {
 
 static constexpr int kRightTopX = 0;
@@ -18,7 +20,23 @@ static constexpr int kLeftTopY = 7;
 Transformation::Rect::Rect(int32_t x, int32_t y, int32_t w, int32_t h) : x(x), y(y), w(w), h(h) {
 }
 
+bool operator==(const Transformation::Rect& lhs, const Transformation::Rect& rhs) {
+    return lhs.x == rhs.x && lhs.y == rhs.y && lhs.w == rhs.w && lhs.h == rhs.h;
+}
+
+bool operator!=(const Transformation::Rect& lhs, const Transformation::Rect& rhs) {
+    return !(lhs == rhs);
+}
+
 Transformation::Size::Size(int32_t w, int32_t h) : w(w), h(h) {
+}
+
+bool operator==(const Transformation::Size& lhs, const Transformation::Size& rhs) {
+    return lhs.w == rhs.w && lhs.h == rhs.h;
+}
+
+bool operator!=(const Transformation::Size& lhs, const Transformation::Size& rhs) {
+    return !(lhs == rhs);
 }
 
 Transformation::Transformation(Transformation::Size input, Transformation::Size output)
@@ -252,6 +270,55 @@ void Transformation::swap(GLfloat coords[16], int index1, int index2) {
     GLfloat tmp = coords[index1];
     coords[index1] = coords[index2];
     coords[index2] = tmp;
+}
+
+const char* Transformation::Describe() {
+    std::ostringstream desc;
+    desc << "Transformation{"
+         << "crop=(" << crop_.x << "," << crop_.y << "," << crop_.w << "," << crop_.h << "), "
+         << "input=" << input_.w << "x" << input_.h << ", "
+         << "output=" << output_.w << "x" << output_.h << ", "
+         << "rotation=" << rotation_ << ", "
+         << "flip=" << flip() << ", "
+         << "scale_type=" << scale_type()
+         << "}";
+    return desc.str().c_str();
+}
+
+const char* Transformation::flip() {
+    switch (flip_) {
+        case kFlipHorizontal:
+            return "Horizontal";
+        case kFlipVertical:
+            return "Vertical";
+        case kFlipHorizontalVertical:
+            return "HorizontalVertical";
+        case kFlipNone:
+        default:
+            return "None";
+    }
+}
+
+const char* Transformation::scale_type() {
+    switch (scale_type_) {
+        case kScaleTypeCenterCrop:
+            return "CenterCrop";
+        case kScaleTypeCenterInside:
+            return "CenterInside";
+        case kScaleTypeFitXY:
+        default:
+            return "FitXY";
+    }
+}
+
+bool operator==(const Transformation& lhs, const Transformation& rhs) {
+    return lhs.crop_ == rhs.crop_ && lhs.input_ == rhs.input_ && lhs.output_ == rhs.output_
+           && lhs.rotation_ == rhs.rotation_ && lhs.flip_ == rhs.flip_
+           && lhs.scale_type_ == rhs.scale_type_;
+}
+
+bool operator!=(const Transformation& lhs, const Transformation& rhs) {
+    return !(lhs == rhs);
 }
 
 }

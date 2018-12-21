@@ -43,6 +43,10 @@ public:
         int32_t h;
 
         Rect(int32_t x, int32_t y, int32_t w, int32_t h);
+
+        friend bool operator==(const Rect& lhs, const Rect& rhs);
+
+        friend bool operator!=(const Rect& lhs, const Rect& rhs);
     };
 
     struct Size {
@@ -50,6 +54,10 @@ public:
         int32_t h;
 
         Size(int32_t w, int32_t h);
+
+        friend bool operator==(const Size& lhs, const Size& rhs);
+
+        friend bool operator!=(const Size& lhs, const Size& rhs);
     };
 
     Transformation(Size input, Size output);
@@ -68,9 +76,15 @@ public:
 
     void Resolve(GLfloat vertex_attributes[16]);
 
+    const char* Describe();
+
     int32_t output_width();
 
     int32_t output_height();
+
+    friend bool operator==(const Transformation& lhs, const Transformation& rhs);
+
+    friend bool operator!=(const Transformation& lhs, const Transformation& rhs);
 
 private:
     void reset();
@@ -84,6 +98,10 @@ private:
     void resolveScale();
 
     void swap(GLfloat coords[16], int index1, int index2);
+
+    const char* flip();
+
+    const char* scale_type();
 
     Rect crop_;
     Size input_;

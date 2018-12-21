@@ -4,6 +4,8 @@
 
 #include "ugi_renderer.h"
 
+#include "ugi_logging.h"
+
 namespace Ugi {
 
 static constexpr GLint kUgiTextureEnum = GL_TEXTURE0;
@@ -77,8 +79,15 @@ void Renderer::OnSurfaceDestroyed() {
 }
 
 void Renderer::UpdateTransformation(Transformation transformation) {
-    transformation_ = transformation;
-    bindBuffers();
+    if (transformation_ != transformation) {
+        ugi_log(UGI_LOG_LEVEL_INFO, "UpdateTransformation from %s to %s",
+                transformation_.Describe(), transformation.Describe());
+
+        transformation_ = transformation;
+        bindBuffers();
+    } else {
+        ugi_log(UGI_LOG_LEVEL_INFO, "UpdateTransformation with same %s", transformation.Describe());
+    }
 }
 
 void Renderer::RenderRgb(GLuint texture_id, int32_t width, int32_t height, int64_t timestamp) {
