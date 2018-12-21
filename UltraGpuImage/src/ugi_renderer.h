@@ -8,16 +8,21 @@
 #include <stdint.h>
 
 #include "ugi_gl.h"
+#include "ugi_transformation.h"
 
-class UgiRenderer {
+namespace Ugi {
+
+class Renderer {
 public:
-    UgiRenderer();
+    Renderer(Transformation transformation);
 
-    ~UgiRenderer();
+    ~Renderer();
 
-    void OnSurfaceChanged(int32_t width, int32_t height);
+    void OnSurfaceCreated();
 
     void OnSurfaceDestroyed();
+
+    void UpdateTransformation(Transformation transformation);
 
     void RenderRgb(GLuint texture_id, int32_t width, int32_t height, int64_t timestamp);
 
@@ -34,6 +39,8 @@ private:
 
     GLenum textureType(TextureType type);
 
+    void bindBuffers();
+
     void renderTexture(TextureType type, GLuint texture_id, int32_t width, int32_t height,
                        int64_t timestamp);
 
@@ -41,7 +48,11 @@ private:
     GLuint vao_;
     GLuint vbo_;
     GLuint ebo_;
+
+    Transformation transformation_;
+    GLfloat vertex_attributes_[16];
 };
 
+}
 
 #endif //ULTRAGPUIMAGE_UGI_RENDERER_H

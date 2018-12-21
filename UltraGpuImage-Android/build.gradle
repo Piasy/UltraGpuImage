@@ -37,4 +37,5 @@ android {
 
 dependencies {
     api 'com.google.code.findbugs:jsr305:3.0.2'
+    implementation "androidx.annotation:annotation:1.0.1"
 }

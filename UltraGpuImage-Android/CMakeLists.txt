@@ -6,6 +6,7 @@ include_directories(
 
 file(GLOB_RECURSE ugi_sources
         ../UltraGpuImage/src/ugi_renderer.cpp
+        ../UltraGpuImage/src/ugi_transformation.cpp
         )
 
 add_library(

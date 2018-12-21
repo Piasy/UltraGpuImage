@@ -1,27 +1,34 @@
 #include <jni.h>
 
 #include "ugi_renderer.h"
+#include "ugi_transformation.h"
 
 extern "C" {
 
 JNIEXPORT jlong JNICALL
-Java_com_piasy_ugi_UgiRenderer_nativeCreate(JNIEnv* env, jclass type) {
-    UgiRenderer* renderer = new UgiRenderer();
-    return reinterpret_cast<jlong>(renderer);
+Java_com_piasy_ugi_UgiRenderer_nativeCreate(JNIEnv* env, jclass type, jlong nativeTransformation) {
+    Ugi::Transformation* transformation
+            = reinterpret_cast<Ugi::Transformation*>(nativeTransformation);
+    if (transformation) {
+        Ugi::Renderer* renderer = new Ugi::Renderer(*transformation);
+        return reinterpret_cast<jlong>(renderer);
+    } else {
+        return 0;
+    }
 }
 
 JNIEXPORT void JNICALL
-Java_com_piasy_ugi_UgiRenderer_nativeOnSurfaceChanged(
-        JNIEnv* env, jclass type, jlong handle, jint width, jint height) {
-    UgiRenderer* renderer = reinterpret_cast<UgiRenderer*>(handle);
+Java_com_piasy_ugi_UgiRenderer_nativeOnSurfaceCreated(
+        JNIEnv* env, jclass type, jlong handle) {
+    Ugi::Renderer* renderer = reinterpret_cast<Ugi::Renderer*>(handle);
     if (renderer) {
-        renderer->OnSurfaceChanged(width, height);
+        renderer->OnSurfaceCreated();
     }
 }
 
 JNIEXPORT void JNICALL
 Java_com_piasy_ugi_UgiRenderer_nativeOnSurfaceDestroyed(JNIEnv* env, jclass type, jlong handle) {
-    UgiRenderer* renderer = reinterpret_cast<UgiRenderer*>(handle);
+    Ugi::Renderer* renderer = reinterpret_cast<Ugi::Renderer*>(handle);
     if (renderer) {
         renderer->OnSurfaceDestroyed();
     }
@@ -31,7 +38,7 @@ JNIEXPORT void JNICALL
 Java_com_piasy_ugi_UgiRenderer_nativeRenderRgb(
         JNIEnv* env, jclass type, jlong handle, jint textureId, jint width, jint height,
         jlong timestamp) {
-    UgiRenderer* renderer = reinterpret_cast<UgiRenderer*>(handle);
+    Ugi::Renderer* renderer = reinterpret_cast<Ugi::Renderer*>(handle);
     if (renderer) {
         renderer->RenderRgb(static_cast<GLuint>(textureId), width, height, timestamp);
     }
@@ -41,17 +48,100 @@ JNIEXPORT void JNICALL
 Java_com_piasy_ugi_UgiRenderer_nativeRenderOes(
         JNIEnv* env, jclass type, jlong handle, jint textureId, jint width, jint height,
         jlong timestamp) {
-    UgiRenderer* renderer = reinterpret_cast<UgiRenderer*>(handle);
+    Ugi::Renderer* renderer = reinterpret_cast<Ugi::Renderer*>(handle);
     if (renderer) {
         renderer->RenderOes(static_cast<GLuint>(textureId), width, height, timestamp);
     }
 }
 
 JNIEXPORT void JNICALL
+Java_com_piasy_ugi_UgiRenderer_nativeUpdateTransformation(
+        JNIEnv* env, jclass type, jlong handle, jlong nativeTransformation) {
+    Ugi::Renderer* renderer = reinterpret_cast<Ugi::Renderer*>(handle);
+    Ugi::Transformation* transformation
+            = reinterpret_cast<Ugi::Transformation*>(nativeTransformation);
+    if (renderer && transformation) {
+        renderer->UpdateTransformation(*transformation);
+    }
+}
+
+JNIEXPORT void JNICALL
 Java_com_piasy_ugi_UgiRenderer_nativeDestroy(JNIEnv* env, jclass type, jlong handle) {
-    UgiRenderer* renderer = reinterpret_cast<UgiRenderer*>(handle);
+    Ugi::Renderer* renderer = reinterpret_cast<Ugi::Renderer*>(handle);
     if (renderer) {
         delete renderer;
+    }
+}
+
+JNIEXPORT jlong JNICALL
+Java_com_piasy_ugi_UgiTransformation_nativeCreate(
+        JNIEnv* env, jclass type, jint inputWidth, jint inputHeight, jint outputWidth,
+        jint outputHeight) {
+    Ugi::Transformation* transformation
+            = new Ugi::Transformation(Ugi::Transformation::Size(inputWidth, inputHeight),
+                                      Ugi::Transformation::Size(outputWidth, outputHeight));
+    return reinterpret_cast<jlong>(transformation);
+}
+
+JNIEXPORT void JNICALL
+Java_com_piasy_ugi_UgiTransformation_nativeUpdateInput(
+        JNIEnv* env, jclass type, jlong handle, jint width, jint height) {
+    Ugi::Transformation* transformation = reinterpret_cast<Ugi::Transformation*>(handle);
+    if (transformation) {
+        transformation->UpdateInput(Ugi::Transformation::Size(width, height));
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_com_piasy_ugi_UgiTransformation_nativeUpdateOutput(
+        JNIEnv* env, jclass type, jlong handle, jint width, jint height) {
+    Ugi::Transformation* transformation = reinterpret_cast<Ugi::Transformation*>(handle);
+    if (transformation) {
+        transformation->UpdateOutput(Ugi::Transformation::Size(width, height));
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_com_piasy_ugi_UgiTransformation_nativeUpdateCrop(
+        JNIEnv* env, jclass type, jlong handle, jint x, jint y, jint width, jint height) {
+    Ugi::Transformation* transformation = reinterpret_cast<Ugi::Transformation*>(handle);
+    if (transformation) {
+        transformation->UpdateCrop(Ugi::Transformation::Rect(x, y, width, height));
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_com_piasy_ugi_UgiTransformation_nativeUpdateFlip(
+        JNIEnv* env, jclass type, jlong handle, jint flip) {
+    Ugi::Transformation* transformation = reinterpret_cast<Ugi::Transformation*>(handle);
+    if (transformation) {
+        transformation->UpdateFlip(Ugi::Transformation::Flip(flip));
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_com_piasy_ugi_UgiTransformation_nativeUpdateRotation(
+        JNIEnv* env, jclass type, jlong handle, jint rotation) {
+    Ugi::Transformation* transformation = reinterpret_cast<Ugi::Transformation*>(handle);
+    if (transformation) {
+        transformation->UpdateRotation(Ugi::Transformation::Rotation(rotation));
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_com_piasy_ugi_UgiTransformation_nativeUpdateScaleType(
+        JNIEnv* env, jclass type, jlong handle, jint scaleType) {
+    Ugi::Transformation* transformation = reinterpret_cast<Ugi::Transformation*>(handle);
+    if (transformation) {
+        transformation->UpdateScaleType(Ugi::Transformation::ScaleType(scaleType));
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_com_piasy_ugi_UgiTransformation_nativeDestroy(JNIEnv* env, jclass type, jlong handle) {
+    Ugi::Transformation* transformation = reinterpret_cast<Ugi::Transformation*>(handle);
+    if (transformation) {
+        delete transformation;
     }
 }
 

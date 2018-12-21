@@ -23,6 +23,7 @@ public class UgiRenderer {
 
     private final String mName;
     private final Handler mRenderHandler;
+    private final UgiTransformation mTransformation;
     private final EglSurfaceCreation mEglSurfaceCreationRunnable = new EglSurfaceCreation();
 
     private EglBase mEglBase;
@@ -35,7 +36,8 @@ public class UgiRenderer {
 
     public UgiRenderer(String name, EGLContext sharedContext, int[] configAttributes) {
         mName = name;
-        mNativeHandle = nativeCreate();
+        mTransformation = new UgiTransformation(480, 640, 480, 640);
+        mNativeHandle = nativeCreate(mTransformation.mNativeHandle);
 
         logInfo("new UgiRenderer, handle " + mNativeHandle);
 
@@ -54,9 +56,9 @@ public class UgiRenderer {
         logInfo("new UgiRenderer success");
     }
 
-    private static native long nativeCreate();
+    private static native long nativeCreate(long nativeTransformation);
 
-    private static native void nativeOnSurfaceChanged(long handle, int width, int height);
+    private static native void nativeOnSurfaceCreated(long handle);
 
     private static native void nativeOnSurfaceDestroyed(long handle);
 
@@ -65,6 +67,8 @@ public class UgiRenderer {
 
     private static native void nativeRenderOes(long handle, int textureId, int width, int height,
             long timestamp);
+
+    private static native void nativeUpdateTransformation(long handle, long nativeTransformation);
 
     private static native void nativeDestroy(long handle);
 
@@ -76,15 +80,6 @@ public class UgiRenderer {
     public void onSurfaceCreated(SurfaceTexture surfaceTexture) {
         logInfo("onSurfaceCreated " + surfaceTexture);
         createEglSurfaceInternal(surfaceTexture);
-    }
-
-    public void onSurfaceChanged(int width, int height) {
-        logInfo("onSurfaceChanged " + width + "x" + height);
-        mRenderHandler.post(() -> {
-            if (mNativeHandle != 0) {
-                nativeOnSurfaceChanged(mNativeHandle, width, height);
-            }
-        });
     }
 
     public void onSurfaceDestroyed() {
@@ -125,13 +120,26 @@ public class UgiRenderer {
         mRenderHandler.post(runnable);
     }
 
+    public UgiTransformation getTransformation() {
+        return mTransformation;
+    }
+
+    public void notifyTransformationUpdated() {
+        mRenderHandler.post(() -> {
+            if (mNativeHandle != 0) {
+                nativeUpdateTransformation(mNativeHandle, mTransformation.mNativeHandle);
+            }
+        });
+    }
+
     public void destroy() {
         logInfo("destroy");
         mRenderHandler.post(() -> {
             if (mNativeHandle != 0) {
                 nativeDestroy(mNativeHandle);
+                mNativeHandle = 0;
             }
-            mNativeHandle = 0;
+            mTransformation.destroy();
             mRenderHandler.getLooper().quit();
         });
     }
@@ -158,7 +166,8 @@ public class UgiRenderer {
 
         @Override
         public synchronized void run() {
-            if (mSurface != null && mEglBase != null && !mEglBase.hasSurface()) {
+            if (mSurface != null && mEglBase != null && !mEglBase.hasSurface()
+                && mNativeHandle != 0) {
                 if (mSurface instanceof Surface) {
                     mEglBase.createSurface((Surface) mSurface);
                 } else if (mSurface instanceof SurfaceTexture) {
@@ -170,6 +179,8 @@ public class UgiRenderer {
                 mEglBase.makeCurrent();
                 // Necessary for YUV frames with odd width.
                 GLES20.glPixelStorei(GLES20.GL_UNPACK_ALIGNMENT, 1);
+
+                nativeOnSurfaceCreated(mNativeHandle);
             }
         }
     }

@@ -4,14 +4,9 @@
 
 #include "ugi_renderer.h"
 
+namespace Ugi {
+
 static constexpr GLint kUgiTextureEnum = GL_TEXTURE0;
-static constexpr GLfloat kVertexAttributes[] = {
-        // vertex       // texture
-        1.0f, 1.0f,     1.0f, 1.0f,     // right top
-        1.0f, -1.0f,    1.0f, 0.0f,     // right bottom
-        -1.0f, -1.0f,   0.0f, 0.0f,     // left bottom
-        -1.0f, 1.0f,    0.0f, 1.0f,     // left top
-};
 static constexpr GLuint kVertexIndices[] = {
         0, 1, 3, 1, 2, 3,
 };
@@ -46,47 +41,30 @@ static const GLchar* kFragmentShaderOes
                   }
           );
 
-UgiRenderer::UgiRenderer() : vao_(0), vbo_(0), ebo_(0) {
+Renderer::Renderer(Transformation transformation) : vao_(0), vbo_(0), ebo_(0),
+                                                    transformation_(transformation) {
     for (int i = 0; i < kTextureTypeMax; i++) {
         programs_[i] = 0;
     }
 }
 
-UgiRenderer::~UgiRenderer() {
+Renderer::~Renderer() {
 }
 
-void UgiRenderer::OnSurfaceChanged(int32_t width, int32_t height) {
+void Renderer::OnSurfaceCreated() {
     glGenVertexArrays(1, &vao_);
-    glBindVertexArray(vao_);
 
     GLuint buffers[] = {0, 0};
     glGenBuffers(2, buffers);
     vbo_ = buffers[0];
     ebo_ = buffers[1];
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(kVertexAttributes), kVertexAttributes, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(kVertexIndices), kVertexIndices,
-                 GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat),
-                          reinterpret_cast<const void*>(2 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
-
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    bindBuffers();
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glViewport(0, 0, width, height);
 }
 
-void UgiRenderer::OnSurfaceDestroyed() {
+void Renderer::OnSurfaceDestroyed() {
     for (int i = 0; i < kTextureTypeMax; i++) {
         if (programs_[i] != 0) {
             glDeleteProgram(programs_[i]);
@@ -98,16 +76,21 @@ void UgiRenderer::OnSurfaceDestroyed() {
     glDeleteVertexArrays(1, &vao_);
 }
 
-void UgiRenderer::RenderRgb(GLuint texture_id, int32_t width, int32_t height, int64_t timestamp) {
+void Renderer::UpdateTransformation(Transformation transformation) {
+    transformation_ = transformation;
+    bindBuffers();
+}
+
+void Renderer::RenderRgb(GLuint texture_id, int32_t width, int32_t height, int64_t timestamp) {
     renderTexture(kTextureTypeRgb, texture_id, width, height, timestamp);
 }
 
-void UgiRenderer::RenderOes(GLuint texture_id, int32_t width, int32_t height, int64_t timestamp) {
+void Renderer::RenderOes(GLuint texture_id, int32_t width, int32_t height, int64_t timestamp) {
     renderTexture(kTextureTypeOes, texture_id, width, height, timestamp);
 }
 
-void UgiRenderer::renderTexture(TextureType type, GLuint texture_id, int32_t width, int32_t height,
-                                int64_t timestamp) {
+void Renderer::renderTexture(TextureType type, GLuint texture_id, int32_t width, int32_t height,
+                             int64_t timestamp) {
     prepareShader(type);
 
     glClear(GL_COLOR_BUFFER_BIT);
@@ -121,7 +104,7 @@ void UgiRenderer::renderTexture(TextureType type, GLuint texture_id, int32_t wid
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
-void UgiRenderer::prepareShader(UgiRenderer::TextureType type) {
+void Renderer::prepareShader(Renderer::TextureType type) {
     if (programs_[type] != 0) {
         return;
     }
@@ -158,7 +141,7 @@ void UgiRenderer::prepareShader(UgiRenderer::TextureType type) {
     glUniform1i(tex_loc, kUgiTextureEnum - GL_TEXTURE0);
 }
 
-GLenum UgiRenderer::textureType(UgiRenderer::TextureType type) {
+GLenum Renderer::textureType(Renderer::TextureType type) {
     switch (type) {
         case kTextureTypeOes:
             return GL_TEXTURE_EXTERNAL_OES;
@@ -166,4 +149,30 @@ GLenum UgiRenderer::textureType(UgiRenderer::TextureType type) {
         default:
             return GL_TEXTURE_2D;
     }
+}
+
+void Renderer::bindBuffers() {
+    glViewport(0, 0, transformation_.output_width(), transformation_.output_height());
+    transformation_.Resolve(vertex_attributes_);
+
+    glBindVertexArray(vao_);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_attributes_), vertex_attributes_, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(kVertexIndices), kVertexIndices,
+                 GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat),
+                          reinterpret_cast<const void*>(2 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
 }
