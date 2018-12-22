@@ -4,6 +4,7 @@
 #include "ugi_renderer.h"
 #include "ugi_transformation.h"
 #include "ugi_logging.h"
+#include "filters/ugi_preprocess_filter.h"
 
 extern "C" {
 
@@ -28,6 +29,7 @@ Java_com_piasy_ugi_UgiRenderer_nativeCreate(JNIEnv* env, jclass type, jlong nati
             = reinterpret_cast<Ugi::Transformation*>(nativeTransformation);
     if (transformation) {
         Ugi::Renderer* renderer = new Ugi::Renderer(*transformation);
+        renderer->SetFilter(new Ugi::PreprocessFilter());
         return reinterpret_cast<jlong>(renderer);
     } else {
         return 0;
@@ -52,20 +54,11 @@ Java_com_piasy_ugi_UgiRenderer_nativeOnSurfaceDestroyed(JNIEnv* env, jclass type
 }
 
 JNIEXPORT void JNICALL
-Java_com_piasy_ugi_UgiRenderer_nativeRenderRgb(
-        JNIEnv* env, jclass type, jlong handle, jint textureId, jlong timestamp) {
+Java_com_piasy_ugi_UgiRenderer_nativeRenderTexture(
+        JNIEnv* env, jclass type, jlong handle, jint textureType, jint textureId) {
     Ugi::Renderer* renderer = reinterpret_cast<Ugi::Renderer*>(handle);
     if (renderer) {
-        renderer->RenderRgb(static_cast<GLuint>(textureId), timestamp);
-    }
-}
-
-JNIEXPORT void JNICALL
-Java_com_piasy_ugi_UgiRenderer_nativeRenderOes(
-        JNIEnv* env, jclass type, jlong handle, jint textureId, jlong timestamp) {
-    Ugi::Renderer* renderer = reinterpret_cast<Ugi::Renderer*>(handle);
-    if (renderer) {
-        renderer->RenderOes(static_cast<GLuint>(textureId), timestamp);
+        renderer->RenderTexture(Ugi::TextureType(textureType), static_cast<GLuint>(textureId));
     }
 }
 

@@ -6,9 +6,11 @@
 #define ULTRAGPUIMAGE_UGI_RENDERER_H
 
 #include <stdint.h>
+#include <memory>
 
 #include "ugi_gl.h"
 #include "ugi_transformation.h"
+#include "ugi_filter.h"
 
 namespace Ugi {
 
@@ -24,32 +26,21 @@ public:
 
     void UpdateTransformation(Transformation transformation);
 
-    void RenderRgb(GLuint texture_id, int64_t timestamp);
+    void RenderTexture(TextureType type, GLuint texture_id);
 
-    void RenderOes(GLuint texture_id, int64_t timestamp);
+    void SetFilter(Filter* filter);
 
 private:
-    enum TextureType {
-        kTextureTypeRgb,
-        kTextureTypeOes,
-        kTextureTypeMax,
-    };
-
-    void prepareShader(TextureType type);
-
-    GLenum textureType(TextureType type);
-
     void bindBuffers();
 
-    void renderTexture(TextureType type, GLuint texture_id, int64_t timestamp);
-
-    GLuint programs_[kTextureTypeMax];
     GLuint vao_;
     GLuint vbo_;
     GLuint ebo_;
 
     Transformation transformation_;
     GLfloat vertex_attributes_[16];
+
+    std::unique_ptr<Filter> filter_;
 };
 
 }

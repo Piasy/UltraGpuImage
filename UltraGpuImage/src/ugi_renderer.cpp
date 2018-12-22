@@ -8,51 +8,12 @@
 
 namespace Ugi {
 
-#define GLSL_VERSION "300 es"
-
-static constexpr GLint kUgiTextureEnum = GL_TEXTURE0;
 static constexpr GLuint kVertexIndices[] = {
         0, 1, 3, 1, 2, 3,
 };
 
-static const GLchar* kVertexShader
-        = "#version " GLSL_VERSION "\n"
-          "layout(location = 0) in vec2 aVertCoords;\n"
-          "layout(location = 1) in vec2 aTexCoords;\n"
-          "out vec2 texCoords;\n"
-          "void main() {\n"
-          "    gl_Position = vec4(aVertCoords, 0.0, 1.0);\n"
-          "    texCoords = aTexCoords;\n"
-          "}\n";
-static const GLchar* kFragmentShaderRgb
-        = "#version " GLSL_VERSION "\n"
-          "#ifdef GL_ES\n"
-          "precision mediump float;\n"
-          "#endif\n"
-          "in vec2 texCoords;\n"
-          "uniform sampler2D tex;\n"
-          "out vec4 fragColor;\n"
-          "void main() {\n"
-          "    fragColor = texture(tex, texCoords);\n"
-          "}\n";
-static const GLchar* kFragmentShaderOes
-        = "#version " GLSL_VERSION "\n"
-          "#extension GL_OES_EGL_image_external_essl3: require\n"
-          "#ifdef GL_ES\n"
-          "precision mediump float;\n"
-          "#endif\n"
-          "in vec2 texCoords;\n"
-          "uniform samplerExternalOES tex;\n"
-          "out vec4 fragColor;\n"
-          "void main() {\n"
-          "    fragColor = texture(tex, texCoords);\n"
-          "}\n";
-
 Renderer::Renderer(Transformation transformation) : vao_(0), vbo_(0), ebo_(0),
                                                     transformation_(transformation) {
-    for (int i = 0; i < kTextureTypeMax; i++) {
-        programs_[i] = 0;
-    }
 }
 
 Renderer::~Renderer() {
@@ -72,10 +33,8 @@ void Renderer::OnSurfaceCreated() {
 }
 
 void Renderer::OnSurfaceDestroyed() {
-    for (int i = 0; i < kTextureTypeMax; i++) {
-        if (programs_[i] != 0) {
-            glDeleteProgram(programs_[i]);
-        }
+    if (filter_) {
+        filter_->Destroy();
     }
 
     GLuint buffers[] = {vbo_, ebo_};
@@ -95,73 +54,16 @@ void Renderer::UpdateTransformation(Transformation transformation) {
     }
 }
 
-void Renderer::RenderRgb(GLuint texture_id, int64_t timestamp) {
-    renderTexture(kTextureTypeRgb, texture_id, timestamp);
+void Renderer::SetFilter(Filter* filter) {
+    filter_.reset(filter);
 }
 
-void Renderer::RenderOes(GLuint texture_id, int64_t timestamp) {
-    renderTexture(kTextureTypeOes, texture_id, timestamp);
-}
-
-void Renderer::renderTexture(TextureType type, GLuint texture_id, int64_t timestamp) {
-    prepareShader(type);
-
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glUseProgram(programs_[type]);
-
-    glActiveTexture(kUgiTextureEnum);
-    glBindTexture(textureType(type), texture_id);
-
-    glBindVertexArray(vao_);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-}
-
-void Renderer::prepareShader(Renderer::TextureType type) {
-    if (programs_[type] != 0) {
+void Renderer::RenderTexture(TextureType type, GLuint texture_id) {
+    if (!filter_ || filter_->Init() != 0) {
         return;
     }
 
-    const GLchar* fragmentShader = nullptr;
-    switch (type) {
-        case kTextureTypeOes:
-            fragmentShader = kFragmentShaderOes;
-            break;
-        case kTextureTypeRgb:
-        default:
-            fragmentShader = kFragmentShaderRgb;
-            break;
-    }
-    GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &kVertexShader, nullptr);
-    glCompileShader(vertex_shader);
-
-    GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragmentShader, nullptr);
-    glCompileShader(fragment_shader);
-
-    programs_[type] = glCreateProgram();
-    glAttachShader(programs_[type], vertex_shader);
-    glAttachShader(programs_[type], fragment_shader);
-    glLinkProgram(programs_[type]);
-
-    glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);
-
-    GLint tex_loc = glGetUniformLocation(programs_[type], "tex");
-
-    glUseProgram(programs_[type]);
-    glUniform1i(tex_loc, kUgiTextureEnum - GL_TEXTURE0);
-}
-
-GLenum Renderer::textureType(Renderer::TextureType type) {
-    switch (type) {
-        case kTextureTypeOes:
-            return GL_TEXTURE_EXTERNAL_OES;
-        case kTextureTypeRgb:
-        default:
-            return GL_TEXTURE_2D;
-    }
+    filter_->Apply(type, texture_id, vao_);
 }
 
 void Renderer::bindBuffers() {

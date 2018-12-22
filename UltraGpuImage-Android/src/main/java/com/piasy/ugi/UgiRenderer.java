@@ -17,6 +17,9 @@ import com.piasy.ugi.utils.ThreadUtils;
 public class UgiRenderer {
     private static final String TAG = "UgiRenderer";
 
+    private static final int TEXTURE_TYPE_RGB = 0;
+    private static final int TEXTURE_TYPE_OES = 1;
+
     static {
         System.loadLibrary("UltraGpuImage");
     }
@@ -62,9 +65,7 @@ public class UgiRenderer {
 
     private static native void nativeOnSurfaceDestroyed(long handle);
 
-    private static native void nativeRenderRgb(long handle, int textureId, long timestamp);
-
-    private static native void nativeRenderOes(long handle, int textureId, long timestamp);
+    private static native void nativeRenderTexture(long handle, int textureType, int textureId);
 
     private static native void nativeUpdateTransformation(long handle, long nativeTransformation);
 
@@ -97,21 +98,11 @@ public class UgiRenderer {
     }
 
     public void renderRgb(int textureId, long timestamp) {
-        mRenderHandler.post(() -> {
-            if (mNativeHandle != 0) {
-                nativeRenderRgb(mNativeHandle, textureId, timestamp);
-                mEglBase.swapBuffers(timestamp);
-            }
-        });
+        renderTexture(TEXTURE_TYPE_RGB, textureId, timestamp);
     }
 
     public void renderOes(int textureId, long timestamp) {
-        mRenderHandler.post(() -> {
-            if (mNativeHandle != 0) {
-                nativeRenderOes(mNativeHandle, textureId, timestamp);
-                mEglBase.swapBuffers(timestamp);
-            }
-        });
+        renderTexture(TEXTURE_TYPE_OES, textureId, timestamp);
     }
 
     public void runOnRenderThread(Runnable runnable) {
@@ -139,6 +130,15 @@ public class UgiRenderer {
             }
             mTransformation.destroy();
             mRenderHandler.getLooper().quit();
+        });
+    }
+
+    private void renderTexture(int textureType, int textureId, long timestamp) {
+        mRenderHandler.post(() -> {
+            if (mNativeHandle != 0) {
+                nativeRenderTexture(mNativeHandle, textureType, textureId);
+                mEglBase.swapBuffers(timestamp);
+            }
         });
     }
 
