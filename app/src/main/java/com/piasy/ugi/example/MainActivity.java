@@ -1,9 +1,11 @@
-package com.piasy.ultragpuimage.example;
+package com.piasy.ugi.example;
 
 import android.app.Activity;
+import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
+import android.hardware.Camera;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.TextureView;
@@ -20,10 +22,17 @@ import butterknife.OnTextChanged;
 import com.piasy.ugi.UgiTextureView;
 import com.piasy.ugi.UgiTransformation;
 import com.piasy.ugi.utils.Logging;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import org.webrtc.EglBase;
+import org.webrtc.SurfaceTextureHelper;
+import org.webrtc.VideoFrame;
 
 public class MainActivity extends Activity {
+
+    static final String MODE_EXTRA_KEY = "MODE_EXTRA_KEY";
+    static final String CAMERA_FACE_EXTRA_KEY = "CAMERA_FACE_EXTRA_KEY";
 
     private static final List<NamedValue> SCALE_TYPE_LIST = Arrays.asList(
             new NamedValue("FIT_XY", UgiTransformation.SCALE_TYPE_FIT_XY),
@@ -70,7 +79,13 @@ public class MainActivity extends Activity {
     @BindView(R.id.rotation)
     Spinner rotationSpinner;
 
+    private int mRenderMode;
     private UgiTransformation mTransformation;
+    private boolean mStarted;
+
+    private EglBase mEglBase;
+    private Camera mCamera;
+    private SurfaceTextureHelper mSurfaceTextureHelper;
 
     private int cropX;
     private int cropY;
@@ -104,14 +119,6 @@ public class MainActivity extends Activity {
         flipSpinner.setSelection(0);
         rotationSpinner.setSelection(0);
 
-        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.awesomeface);
-        inputWidthEdit.setText(String.valueOf(bitmap.getWidth()));
-        inputHeightEdit.setText(String.valueOf(bitmap.getHeight()));
-
-        surface.init(null, UgiTextureView.RENDER_MODE_PICTURE);
-        mTransformation = surface.getTransformation();
-        surface.renderPicture(bitmap);
-
         surface.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(final SurfaceTexture surface, final int width,
@@ -134,6 +141,64 @@ public class MainActivity extends Activity {
             public void onSurfaceTextureUpdated(final SurfaceTexture surface) {
             }
         });
+
+        mRenderMode = getIntent().getIntExtra(MODE_EXTRA_KEY, UgiTextureView.RENDER_MODE_PICTURE);
+        int cameraFace = getIntent().getIntExtra(CAMERA_FACE_EXTRA_KEY,
+                Camera.CameraInfo.CAMERA_FACING_FRONT);
+
+        if (mRenderMode == UgiTextureView.RENDER_MODE_PICTURE) {
+            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.awesomeface);
+            inputWidthEdit.setText(String.valueOf(bitmap.getWidth()));
+            inputHeightEdit.setText(String.valueOf(bitmap.getHeight()));
+
+            surface.init(null, UgiTextureView.RENDER_MODE_PICTURE);
+            mTransformation = surface.getTransformation();
+            surface.renderPicture(bitmap);
+        } else {
+            try {
+                boolean landscape = getRequestedOrientation()
+                                    == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+                final int cameraWidth = 1280;
+                final int cameraHeight = 720;
+
+                mEglBase = EglBase.createEgl14(EglBase.CONFIG_PLAIN);
+                mSurfaceTextureHelper = SurfaceTextureHelper.create("CameraCapturer",
+                        mEglBase.getEglBaseContext());
+                mCamera = Camera.open(cameraFace);
+
+                final Camera.CameraInfo info = new Camera.CameraInfo();
+                Camera.getCameraInfo(cameraFace, info);
+
+                mCamera.setPreviewTexture(mSurfaceTextureHelper.getSurfaceTexture());
+                Camera.Parameters parameters = mCamera.getParameters();
+                parameters.setPreviewSize(cameraWidth, cameraHeight);
+                mCamera.setParameters(parameters);
+
+                surface.init(EglContextHacker.getContextFromEglBase(mEglBase),
+                        UgiTextureView.RENDER_MODE_CAMERA_PREVIEW);
+                mTransformation = surface.getTransformation();
+                surface.updateCameraInfo(cameraWidth, cameraHeight, info.orientation,
+                        cameraFace == Camera.CameraInfo.CAMERA_FACING_FRONT, landscape);
+
+                inputWidthEdit.setText(String.valueOf(mTransformation.getInputWidth()));
+                inputHeightEdit.setText(String.valueOf(mTransformation.getInputHeight()));
+                rotationSpinner.setSelection(mTransformation.getRotation() / 90);
+                flipSpinner.setSelection(mTransformation.getFlip());
+
+                mSurfaceTextureHelper.setTextureSize(cameraWidth, cameraHeight);
+                mSurfaceTextureHelper.startListening(videoFrame -> {
+                    VideoFrame.Buffer buffer = videoFrame.getBuffer();
+                    if (buffer instanceof VideoFrame.TextureBuffer) {
+                        surface.renderOes(((VideoFrame.TextureBuffer) buffer).getTextureId());
+                    }
+                });
+
+                mCamera.startPreview();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        mStarted = true;
     }
 
     @Override
@@ -141,6 +206,20 @@ public class MainActivity extends Activity {
         super.onDestroy();
 
         surface.destroy();
+
+        if (mCamera != null) {
+            mCamera.stopPreview();
+            mCamera.release();
+            mCamera = null;
+        }
+        if (mSurfaceTextureHelper != null) {
+            mSurfaceTextureHelper.dispose();
+            mSurfaceTextureHelper = null;
+        }
+        if (mEglBase != null) {
+            mEglBase.release();
+            mEglBase = null;
+        }
     }
 
     @OnTextChanged(R.id.cropX)
@@ -233,7 +312,7 @@ public class MainActivity extends Activity {
     }
 
     private void updateTransformation() {
-        if (mTransformation != null) {
+        if (mStarted) {
             mTransformation.updateInput(inputWidth, inputHeight);
             mTransformation.updateOutput(outputWidth, outputHeight);
             mTransformation.updateCrop(cropX, cropY, cropWidth, cropHeight);

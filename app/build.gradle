@@ -8,7 +8,9 @@ android {
         versionCode rootProject.ext.releaseVersionCode
         versionName rootProject.ext.releaseVersionName
 
-        applicationId "com.piasy.ultragpuimage.example"
+        applicationId "com.piasy.ugi.example"
+
+        ndk.abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
     }
     buildTypes {
         release {
@@ -27,4 +29,9 @@ dependencies {
 
     implementation 'com.jakewharton:butterknife:9.0.0-rc3'
     annotationProcessor 'com.jakewharton:butterknife-compiler:9.0.0-rc3'
+
+    implementation 'com.github.hotchemi:permissionsdispatcher:3.0.1'
+    annotationProcessor 'com.github.hotchemi:permissionsdispatcher-processor:3.0.1'
+
+    implementation 'org.webrtc:google-webrtc:1.0.25821'
 }

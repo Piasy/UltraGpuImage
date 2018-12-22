@@ -8,40 +8,45 @@
 
 namespace Ugi {
 
+#define GLSL_VERSION "300 es"
+
 static constexpr GLint kUgiTextureEnum = GL_TEXTURE0;
 static constexpr GLuint kVertexIndices[] = {
         0, 1, 3, 1, 2, 3,
 };
 
 static const GLchar* kVertexShader
-        = UGI_SHADER(
-                layout(location = 0) in vec2 aVertCoords;
-                layout(location = 1) in vec2 aTexCoords;
-                out vec2 texCoords;
-                void main() {
-                    gl_Position = vec4(aVertCoords, 0.0, 1.0);
-                    texCoords = aTexCoords;
-                }
-        );
+        = "#version " GLSL_VERSION "\n"
+          "layout(location = 0) in vec2 aVertCoords;\n"
+          "layout(location = 1) in vec2 aTexCoords;\n"
+          "out vec2 texCoords;\n"
+          "void main() {\n"
+          "    gl_Position = vec4(aVertCoords, 0.0, 1.0);\n"
+          "    texCoords = aTexCoords;\n"
+          "}\n";
 static const GLchar* kFragmentShaderRgb
-        = UGI_SHADER_PRECISION_M(
-                  in vec2 texCoords;
-                  uniform sampler2D tex;
-                  out vec4 fragColor;
-                  void main() {
-                      fragColor = texture(tex, texCoords);
-                  }
-          );
+        = "#version " GLSL_VERSION "\n"
+          "#ifdef GL_ES\n"
+          "precision mediump float;\n"
+          "#endif\n"
+          "in vec2 texCoords;\n"
+          "uniform sampler2D tex;\n"
+          "out vec4 fragColor;\n"
+          "void main() {\n"
+          "    fragColor = texture(tex, texCoords);\n"
+          "}\n";
 static const GLchar* kFragmentShaderOes
-        = "#extension GL_OES_EGL_image_external : require\n"
-        UGI_SHADER_PRECISION_M(
-                  in vec2 texCoords;
-                  uniform sampler2D tex;
-                  out vec4 fragColor;
-                  void main() {
-                      fragColor = texture(tex, texCoords);
-                  }
-          );
+        = "#version " GLSL_VERSION "\n"
+          "#extension GL_OES_EGL_image_external_essl3: require\n"
+          "#ifdef GL_ES\n"
+          "precision mediump float;\n"
+          "#endif\n"
+          "in vec2 texCoords;\n"
+          "uniform samplerExternalOES tex;\n"
+          "out vec4 fragColor;\n"
+          "void main() {\n"
+          "    fragColor = texture(tex, texCoords);\n"
+          "}\n";
 
 Renderer::Renderer(Transformation transformation) : vao_(0), vbo_(0), ebo_(0),
                                                     transformation_(transformation) {

@@ -71,12 +71,28 @@ void Transformation::Resolve(GLfloat vertex_attributes[16]) {
     vertex_attributes[15] = texture_coords_[7];
 }
 
+int32_t Transformation::input_width() {
+    return input_.w;
+}
+
+int32_t Transformation::input_height() {
+    return input_.h;
+}
+
 int32_t Transformation::output_width() {
     return output_.w;
 }
 
 int32_t Transformation::output_height() {
     return output_.h;
+}
+
+Transformation::Rotation Transformation::rotation() {
+    return rotation_;
+}
+
+Transformation::Flip Transformation::flip() {
+    return flip_;
 }
 
 void Transformation::UpdateInput(Transformation::Size input) {
@@ -279,13 +295,13 @@ const char* Transformation::Describe() {
          << "input=" << input_.w << "x" << input_.h << ", "
          << "output=" << output_.w << "x" << output_.h << ", "
          << "rotation=" << rotation_ << ", "
-         << "flip=" << flip() << ", "
+         << "flip=" << flipName() << ", "
          << "scale_type=" << scale_type()
          << "}";
     return desc.str().c_str();
 }
 
-const char* Transformation::flip() {
+const char* Transformation::flipName() {
     switch (flip_) {
         case kFlipHorizontal:
             return "Horizontal";

@@ -152,6 +152,30 @@ Java_com_piasy_ugi_UgiTransformation_nativeUpdateScaleType(
     }
 }
 
+JNIEXPORT jint JNICALL
+Java_com_piasy_ugi_UgiTransformation_nativeGetInputWidth(JNIEnv* env, jclass type, jlong handle) {
+    Ugi::Transformation* transformation = reinterpret_cast<Ugi::Transformation*>(handle);
+    return transformation ? transformation->input_width() : 0;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_piasy_ugi_UgiTransformation_nativeGetInputHeight(JNIEnv* env, jclass type, jlong handle) {
+    Ugi::Transformation* transformation = reinterpret_cast<Ugi::Transformation*>(handle);
+    return transformation ? transformation->input_height() : 0;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_piasy_ugi_UgiTransformation_nativeGetRotation(JNIEnv* env, jclass type, jlong handle) {
+    Ugi::Transformation* transformation = reinterpret_cast<Ugi::Transformation*>(handle);
+    return transformation ? transformation->rotation() : 0;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_piasy_ugi_UgiTransformation_nativeGetFlip(JNIEnv* env, jclass type, jlong handle) {
+    Ugi::Transformation* transformation = reinterpret_cast<Ugi::Transformation*>(handle);
+    return transformation ? transformation->flip() : 0;
+}
+
 JNIEXPORT void JNICALL
 Java_com_piasy_ugi_UgiTransformation_nativeDestroy(JNIEnv* env, jclass type, jlong handle) {
     Ugi::Transformation* transformation = reinterpret_cast<Ugi::Transformation*>(handle);

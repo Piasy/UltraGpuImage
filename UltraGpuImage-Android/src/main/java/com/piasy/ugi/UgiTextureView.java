@@ -98,6 +98,26 @@ public class UgiTextureView extends TextureView implements TextureView.SurfaceTe
         }
     }
 
+    public synchronized void updateCameraInfo(int width, int height, int sensorDegree,
+            boolean frontFace, boolean isLandscape) {
+        if (mRenderer != null) {
+            UgiTransformation transformation = mRenderer.getTransformation();
+            if (isLandscape) {
+                transformation.updateRotation(360 - sensorDegree + 90);
+                transformation.updateInput(width, height);
+            } else {
+                transformation.updateRotation(360 - sensorDegree);
+                transformation.updateInput(height, width);
+            }
+            if (!frontFace && sensorDegree % 180 != 0) {
+                transformation.updateFlip(UgiTransformation.FLIP_VERTICAL);
+            } else {
+                transformation.updateFlip(UgiTransformation.FLIP_NONE);
+            }
+            notifyTransformationUpdated();
+        }
+    }
+
     public synchronized UgiTransformation getTransformation() {
         return mRenderer == null ? null : mRenderer.getTransformation();
     }
@@ -109,6 +129,12 @@ public class UgiTextureView extends TextureView implements TextureView.SurfaceTe
             if (mRenderMode == RENDER_MODE_PICTURE && mPictureTextureId != -1) {
                 mRenderer.renderRgb(mPictureTextureId, 0);
             }
+        }
+    }
+
+    public synchronized void renderOes(int textureId) {
+        if (mRenderer != null && mSurfaceTexture != null) {
+            mRenderer.renderOes(textureId, 0);
         }
     }
 

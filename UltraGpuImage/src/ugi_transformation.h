@@ -78,9 +78,17 @@ public:
 
     const char* Describe();
 
+    int32_t input_width();
+
+    int32_t input_height();
+
     int32_t output_width();
 
     int32_t output_height();
+
+    Rotation rotation();
+
+    Flip flip();
 
     friend bool operator==(const Transformation& lhs, const Transformation& rhs);
 
@@ -99,7 +107,7 @@ private:
 
     void swap(GLfloat coords[16], int index1, int index2);
 
-    const char* flip();
+    const char* flipName();
 
     const char* scale_type();
 

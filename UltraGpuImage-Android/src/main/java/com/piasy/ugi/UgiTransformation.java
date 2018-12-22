@@ -47,6 +47,14 @@ public class UgiTransformation {
 
     private static native void nativeUpdateScaleType(long handle, int scaleType);
 
+    private static native int nativeGetInputWidth(long handle);
+
+    private static native int nativeGetInputHeight(long handle);
+
+    private static native int nativeGetRotation(long handle);
+
+    private static native int nativeGetFlip(long handle);
+
     public static native void nativeDestroy(long handle);
 
     public void updateInput(int width, int height) {
@@ -93,6 +101,22 @@ public class UgiTransformation {
         if (mNativeHandle != 0) {
             nativeUpdateScaleType(mNativeHandle, scaleType);
         }
+    }
+
+    public int getInputWidth() {
+        return mNativeHandle == 0 ? 0 : nativeGetInputWidth(mNativeHandle);
+    }
+
+    public int getInputHeight() {
+        return mNativeHandle == 0 ? 0 : nativeGetInputHeight(mNativeHandle);
+    }
+
+    public int getRotation() {
+        return mNativeHandle == 0 ? 0 : nativeGetRotation(mNativeHandle);
+    }
+
+    public int getFlip() {
+        return mNativeHandle == 0 ? 0 : nativeGetFlip(mNativeHandle);
     }
 
     void destroy() {
