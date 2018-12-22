@@ -24,9 +24,9 @@ public:
 
     void UpdateTransformation(Transformation transformation);
 
-    void RenderRgb(GLuint texture_id, int32_t width, int32_t height, int64_t timestamp);
+    void RenderRgb(GLuint texture_id, int64_t timestamp);
 
-    void RenderOes(GLuint texture_id, int32_t width, int32_t height, int64_t timestamp);
+    void RenderOes(GLuint texture_id, int64_t timestamp);
 
 private:
     enum TextureType {
@@ -41,8 +41,7 @@ private:
 
     void bindBuffers();
 
-    void renderTexture(TextureType type, GLuint texture_id, int32_t width, int32_t height,
-                       int64_t timestamp);
+    void renderTexture(TextureType type, GLuint texture_id, int64_t timestamp);
 
     GLuint programs_[kTextureTypeMax];
     GLuint vao_;

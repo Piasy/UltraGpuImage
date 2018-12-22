@@ -3,10 +3,7 @@ package com.piasy.ultragpuimage.example;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
-import android.opengl.GLES20;
-import android.opengl.GLUtils;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.TextureView;
@@ -20,9 +17,8 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnItemSelected;
 import butterknife.OnTextChanged;
-import com.piasy.ugi.UgiRenderer;
+import com.piasy.ugi.UgiTextureView;
 import com.piasy.ugi.UgiTransformation;
-import com.piasy.ugi.egl.EglBase;
 import com.piasy.ugi.utils.Logging;
 import java.util.Arrays;
 import java.util.List;
@@ -48,7 +44,7 @@ public class MainActivity extends Activity {
     );
 
     @BindView(R.id.surface)
-    TextureView surface;
+    UgiTextureView surface;
 
     @BindView(R.id.cropX)
     EditText cropXEdit;
@@ -74,12 +70,7 @@ public class MainActivity extends Activity {
     @BindView(R.id.rotation)
     Spinner rotationSpinner;
 
-    private volatile boolean mRunning;
-    private UgiRenderer mRenderer;
     private UgiTransformation mTransformation;
-    private volatile int mTexture = -1;
-    private int mTextureWidth;
-    private int mTextureHeight;
 
     private int cropX;
     private int cropY;
@@ -100,9 +91,6 @@ public class MainActivity extends Activity {
 
         Logging.setLogToConsole(true);
 
-        mRenderer = new UgiRenderer(null, EglBase.CONFIG_PLAIN);
-        mTransformation = mRenderer.getTransformation();
-
         ButterKnife.bind(this);
         setupNamedValues(scaleTypeSpinner, SCALE_TYPE_LIST);
         setupNamedValues(flipSpinner, FLIP_LIST);
@@ -116,31 +104,20 @@ public class MainActivity extends Activity {
         flipSpinner.setSelection(0);
         rotationSpinner.setSelection(0);
 
+        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.awesomeface);
+        inputWidthEdit.setText(String.valueOf(bitmap.getWidth()));
+        inputHeightEdit.setText(String.valueOf(bitmap.getHeight()));
+
+        surface.init(null, UgiTextureView.RENDER_MODE_PICTURE);
+        mTransformation = surface.getTransformation();
+        surface.renderPicture(bitmap);
+
         surface.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(final SurfaceTexture surface, final int width,
                     final int height) {
-                Bitmap bitmap = BitmapFactory.decodeResource(getResources(),
-                        R.drawable.awesomeface);
-                mTextureWidth = bitmap.getWidth();
-                mTextureHeight = bitmap.getHeight();
-
-                inputWidthEdit.setText(String.valueOf(mTextureWidth));
-                inputHeightEdit.setText(String.valueOf(mTextureHeight));
                 outputWidthEdit.setText(String.valueOf(width));
                 outputHeightEdit.setText(String.valueOf(height));
-
-                mRenderer.onSurfaceCreated(surface);
-                startRender();
-
-                mRenderer.runOnRenderThread(() -> {
-                    mRenderer.notifyTransformationUpdated();
-                    Matrix matrix = new Matrix();
-                    matrix.postScale(1, -1, mTextureWidth / 2F, mTextureHeight / 2F);
-                    mTexture = loadTexture(
-                            Bitmap.createBitmap(bitmap, 0, 0, mTextureWidth, mTextureHeight, matrix,
-                                    true));
-                });
             }
 
             @Override
@@ -150,7 +127,6 @@ public class MainActivity extends Activity {
 
             @Override
             public boolean onSurfaceTextureDestroyed(final SurfaceTexture surface) {
-                mRenderer.onSurfaceDestroyed();
                 return true;
             }
 
@@ -164,7 +140,7 @@ public class MainActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
 
-        mRunning = false;
+        surface.destroy();
     }
 
     @OnTextChanged(R.id.cropX)
@@ -257,52 +233,16 @@ public class MainActivity extends Activity {
     }
 
     private void updateTransformation() {
-        mTransformation.updateInput(inputWidth, inputHeight);
-        mTransformation.updateOutput(outputWidth, outputHeight);
-        mTransformation.updateCrop(cropX, cropY, cropWidth, cropHeight);
-        mTransformation.updateScaleType(scaleType);
-        mTransformation.updateFlip(flip);
-        mTransformation.updateRotation(rotation);
+        if (mTransformation != null) {
+            mTransformation.updateInput(inputWidth, inputHeight);
+            mTransformation.updateOutput(outputWidth, outputHeight);
+            mTransformation.updateCrop(cropX, cropY, cropWidth, cropHeight);
+            mTransformation.updateScaleType(scaleType);
+            mTransformation.updateFlip(flip);
+            mTransformation.updateRotation(rotation);
 
-        if (mRunning) {
-            mRenderer.notifyTransformationUpdated();
+            surface.notifyTransformationUpdated();
         }
-    }
-
-    private int loadTexture(Bitmap bitmap) {
-        int textures[] = new int[1];
-        GLES20.glGenTextures(1, textures, 0);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0]);
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,
-                GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,
-                GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,
-                GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,
-                GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
-
-        bitmap.recycle();
-
-        return textures[0];
-    }
-
-    private void startRender() {
-        new Thread(() -> {
-            mRunning = true;
-            while (mRunning) {
-                if (mTexture != -1) {
-                    mRenderer.renderRgb(mTexture, mTextureWidth, mTextureHeight, 0);
-                }
-                try {
-                    Thread.sleep(40);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            mRenderer.destroy();
-        }).start();
     }
 
     private static class NamedValue {

@@ -108,7 +108,7 @@ public class UgiTransformation {
             FLIP_VERTICAL,
             FLIP_HORIZONTAL_VERTICAL,
     })
-    public @interface Flip {
+    @interface Flip {
     }
 
     @IntDef(value = {
@@ -117,7 +117,7 @@ public class UgiTransformation {
             ROTATION_180,
             ROTATION_270,
     })
-    public @interface Rotation {
+    @interface Rotation {
     }
 
     @IntDef(value = {
@@ -125,6 +125,6 @@ public class UgiTransformation {
             SCALE_TYPE_CENTER_CROP,
             SCALE_TYPE_CENTER_INSIDE,
     })
-    public @interface ScaleType {
+    @interface ScaleType {
     }
 }

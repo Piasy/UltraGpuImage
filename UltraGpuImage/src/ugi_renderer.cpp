@@ -90,16 +90,15 @@ void Renderer::UpdateTransformation(Transformation transformation) {
     }
 }
 
-void Renderer::RenderRgb(GLuint texture_id, int32_t width, int32_t height, int64_t timestamp) {
-    renderTexture(kTextureTypeRgb, texture_id, width, height, timestamp);
+void Renderer::RenderRgb(GLuint texture_id, int64_t timestamp) {
+    renderTexture(kTextureTypeRgb, texture_id, timestamp);
 }
 
-void Renderer::RenderOes(GLuint texture_id, int32_t width, int32_t height, int64_t timestamp) {
-    renderTexture(kTextureTypeOes, texture_id, width, height, timestamp);
+void Renderer::RenderOes(GLuint texture_id, int64_t timestamp) {
+    renderTexture(kTextureTypeOes, texture_id, timestamp);
 }
 
-void Renderer::renderTexture(TextureType type, GLuint texture_id, int32_t width, int32_t height,
-                             int64_t timestamp) {
+void Renderer::renderTexture(TextureType type, GLuint texture_id, int64_t timestamp) {
     prepareShader(type);
 
     glClear(GL_COLOR_BUFFER_BIT);

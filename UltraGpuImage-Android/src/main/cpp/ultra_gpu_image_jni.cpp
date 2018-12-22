@@ -53,21 +53,19 @@ Java_com_piasy_ugi_UgiRenderer_nativeOnSurfaceDestroyed(JNIEnv* env, jclass type
 
 JNIEXPORT void JNICALL
 Java_com_piasy_ugi_UgiRenderer_nativeRenderRgb(
-        JNIEnv* env, jclass type, jlong handle, jint textureId, jint width, jint height,
-        jlong timestamp) {
+        JNIEnv* env, jclass type, jlong handle, jint textureId, jlong timestamp) {
     Ugi::Renderer* renderer = reinterpret_cast<Ugi::Renderer*>(handle);
     if (renderer) {
-        renderer->RenderRgb(static_cast<GLuint>(textureId), width, height, timestamp);
+        renderer->RenderRgb(static_cast<GLuint>(textureId), timestamp);
     }
 }
 
 JNIEXPORT void JNICALL
 Java_com_piasy_ugi_UgiRenderer_nativeRenderOes(
-        JNIEnv* env, jclass type, jlong handle, jint textureId, jint width, jint height,
-        jlong timestamp) {
+        JNIEnv* env, jclass type, jlong handle, jint textureId, jlong timestamp) {
     Ugi::Renderer* renderer = reinterpret_cast<Ugi::Renderer*>(handle);
     if (renderer) {
-        renderer->RenderOes(static_cast<GLuint>(textureId), width, height, timestamp);
+        renderer->RenderOes(static_cast<GLuint>(textureId), timestamp);
     }
 }
 

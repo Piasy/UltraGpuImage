@@ -62,11 +62,9 @@ public class UgiRenderer {
 
     private static native void nativeOnSurfaceDestroyed(long handle);
 
-    private static native void nativeRenderRgb(long handle, int textureId, int width, int height,
-            long timestamp);
+    private static native void nativeRenderRgb(long handle, int textureId, long timestamp);
 
-    private static native void nativeRenderOes(long handle, int textureId, int width, int height,
-            long timestamp);
+    private static native void nativeRenderOes(long handle, int textureId, long timestamp);
 
     private static native void nativeUpdateTransformation(long handle, long nativeTransformation);
 
@@ -98,19 +96,19 @@ public class UgiRenderer {
         logInfo("onSurfaceDestroyed success");
     }
 
-    public void renderRgb(int textureId, int width, int height, long timestamp) {
+    public void renderRgb(int textureId, long timestamp) {
         mRenderHandler.post(() -> {
             if (mNativeHandle != 0) {
-                nativeRenderRgb(mNativeHandle, textureId, width, height, timestamp);
+                nativeRenderRgb(mNativeHandle, textureId, timestamp);
                 mEglBase.swapBuffers(timestamp);
             }
         });
     }
 
-    public void renderOes(int textureId, int width, int height, long timestamp) {
+    public void renderOes(int textureId, long timestamp) {
         mRenderHandler.post(() -> {
             if (mNativeHandle != 0) {
-                nativeRenderOes(mNativeHandle, textureId, width, height, timestamp);
+                nativeRenderOes(mNativeHandle, textureId, timestamp);
                 mEglBase.swapBuffers(timestamp);
             }
         });
