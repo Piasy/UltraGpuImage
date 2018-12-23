@@ -4,7 +4,6 @@
 #include "ugi_renderer.h"
 #include "ugi_transformation.h"
 #include "ugi_logging.h"
-#include "filters/ugi_preprocess_filter.h"
 
 extern "C" {
 
@@ -29,7 +28,6 @@ Java_com_piasy_ugi_UgiRenderer_nativeCreate(JNIEnv* env, jclass type, jlong nati
             = reinterpret_cast<Ugi::Transformation*>(nativeTransformation);
     if (transformation) {
         Ugi::Renderer* renderer = new Ugi::Renderer(*transformation);
-        renderer->SetFilter(new Ugi::PreprocessFilter());
         return reinterpret_cast<jlong>(renderer);
     } else {
         return 0;
@@ -70,6 +68,16 @@ Java_com_piasy_ugi_UgiRenderer_nativeUpdateTransformation(
             = reinterpret_cast<Ugi::Transformation*>(nativeTransformation);
     if (renderer && transformation) {
         renderer->UpdateTransformation(*transformation);
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_com_piasy_ugi_UgiRenderer_nativeSetFilter(
+        JNIEnv* env, jclass type, jlong handle, jlong filterHandle) {
+    Ugi::Renderer* renderer = reinterpret_cast<Ugi::Renderer*>(handle);
+    Ugi::Filter* filter = reinterpret_cast<Ugi::Filter*>(filterHandle);
+    if (renderer && filter) {
+        renderer->SetFilter(filter);
     }
 }
 

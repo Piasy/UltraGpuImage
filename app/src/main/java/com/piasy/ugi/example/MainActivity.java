@@ -13,14 +13,20 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.SeekBar;
 import android.widget.Spinner;
 import androidx.annotation.NonNull;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnItemSelected;
 import butterknife.OnTextChanged;
+import com.piasy.ugi.UgiFilter;
 import com.piasy.ugi.UgiTextureView;
 import com.piasy.ugi.UgiTransformation;
+import com.piasy.ugi.filters.UgiBrightnessFilter;
+import com.piasy.ugi.filters.UgiColorInvertFilter;
+import com.piasy.ugi.filters.UgiFilterGroup;
+import com.piasy.ugi.filters.UgiPreprocessFilter;
 import com.piasy.ugi.utils.Logging;
 import java.io.IOException;
 import java.util.Arrays;
@@ -51,6 +57,10 @@ public class MainActivity extends Activity {
             new NamedValue("180", UgiTransformation.ROTATION_180),
             new NamedValue("270", UgiTransformation.ROTATION_270)
     );
+    private static final List<NamedValue> FILTER_LIST = Arrays.asList(
+            new NamedValue("color invert", UgiFilter.FILTER_COLOR_INVERT),
+            new NamedValue("brightness", UgiFilter.FILTER_BRIGHTNESS)
+    );
 
     @BindView(R.id.surface)
     UgiTextureView surface;
@@ -79,8 +89,14 @@ public class MainActivity extends Activity {
     @BindView(R.id.rotation)
     Spinner rotationSpinner;
 
+    @BindView(R.id.filter)
+    Spinner filter;
+    @BindView(R.id.filterRatio)
+    SeekBar filterRatio;
+
     private int mRenderMode;
     private UgiTransformation mTransformation;
+    private UgiFilter mFilter;
     private boolean mStarted;
 
     private EglBase mEglBase;
@@ -110,14 +126,16 @@ public class MainActivity extends Activity {
         setupNamedValues(scaleTypeSpinner, SCALE_TYPE_LIST);
         setupNamedValues(flipSpinner, FLIP_LIST);
         setupNamedValues(rotationSpinner, ROTATION_LIST);
+        setupNamedValues(filter, FILTER_LIST);
 
         cropXEdit.setText("0");
         cropYEdit.setText("0");
         cropWidthEdit.setText("10000");
         cropHeightEdit.setText("10000");
-        scaleTypeSpinner.setSelection(0);
+        scaleTypeSpinner.setSelection(1);
         flipSpinner.setSelection(0);
         rotationSpinner.setSelection(0);
+        filter.setSelection(1);
 
         surface.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
@@ -198,6 +216,27 @@ public class MainActivity extends Activity {
                 e.printStackTrace();
             }
         }
+
+        filterRatio.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(final SeekBar seekBar, final int progress,
+                    final boolean fromUser) {
+                updateFilterRatio(progress / 100.0F);
+            }
+
+            @Override
+            public void onStartTrackingTouch(final SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(final SeekBar seekBar) {
+            }
+        });
+
+        UgiFilterGroup filterGroup = new UgiFilterGroup();
+        filterGroup.addFilter(new UgiPreprocessFilter());
+        surface.setFilter(filterGroup);
+
         mStarted = true;
     }
 
@@ -304,6 +343,40 @@ public class MainActivity extends Activity {
         updateTransformation();
     }
 
+    @OnItemSelected(R.id.filter)
+    void filter(AdapterView<?> parent, View view, int position, long id) {
+        if (!mStarted) {
+            return;
+        }
+        UgiFilterGroup filterGroup = new UgiFilterGroup();
+        filterGroup.addFilter(new UgiPreprocessFilter());
+        mFilter = null;
+        switch (FILTER_LIST.get(position).value) {
+            case UgiFilter.FILTER_COLOR_INVERT:
+                mFilter = new UgiColorInvertFilter();
+                break;
+            case UgiFilter.FILTER_BRIGHTNESS:
+                mFilter = new UgiBrightnessFilter();
+                break;
+            default:
+                break;
+        }
+        if (mFilter != null) {
+            filterGroup.addFilter(mFilter);
+        }
+        surface.setFilter(filterGroup);
+    }
+
+    private void updateFilterRatio(float ratio) {
+        if (!mStarted) {
+            return;
+        }
+        if (mFilter instanceof UgiBrightnessFilter) {
+            ((UgiBrightnessFilter) mFilter).setBrightness(ratio);
+            surface.notifyFilterUpdated();
+        }
+    }
+
     private void setupNamedValues(Spinner spinner, List<NamedValue> values) {
         ArrayAdapter adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item,
                 values);
@@ -312,16 +385,17 @@ public class MainActivity extends Activity {
     }
 
     private void updateTransformation() {
-        if (mStarted) {
-            mTransformation.updateInput(inputWidth, inputHeight);
-            mTransformation.updateOutput(outputWidth, outputHeight);
-            mTransformation.updateCrop(cropX, cropY, cropWidth, cropHeight);
-            mTransformation.updateScaleType(scaleType);
-            mTransformation.updateFlip(flip);
-            mTransformation.updateRotation(rotation);
-
-            surface.notifyTransformationUpdated();
+        if (!mStarted) {
+            return;
         }
+        mTransformation.updateInput(inputWidth, inputHeight);
+        mTransformation.updateOutput(outputWidth, outputHeight);
+        mTransformation.updateCrop(cropX, cropY, cropWidth, cropHeight);
+        mTransformation.updateScaleType(scaleType);
+        mTransformation.updateFlip(flip);
+        mTransformation.updateRotation(rotation);
+
+        surface.notifyTransformationUpdated();
     }
 
     private static class NamedValue {

@@ -30,6 +30,7 @@ public class UgiRenderer {
     private final EglSurfaceCreation mEglSurfaceCreationRunnable = new EglSurfaceCreation();
 
     private EglBase mEglBase;
+    private UgiFilter mFilter;
 
     private long mNativeHandle;
 
@@ -68,6 +69,8 @@ public class UgiRenderer {
     private static native void nativeRenderTexture(long handle, int textureType, int textureId);
 
     private static native void nativeUpdateTransformation(long handle, long nativeTransformation);
+
+    private static native void nativeSetFilter(long handle, long filterHandle);
 
     private static native void nativeDestroy(long handle);
 
@@ -121,9 +124,23 @@ public class UgiRenderer {
         });
     }
 
+    public void setFilter(UgiFilter filter) {
+        if (mNativeHandle != 0 && filter.getNativeHandle() != 0) {
+            if (mFilter != null) {
+                mFilter.releaseHandle();
+            }
+            mFilter = filter;
+            nativeSetFilter(mNativeHandle, filter.getNativeHandle());
+        }
+    }
+
     public void destroy() {
         logInfo("destroy");
         mRenderHandler.post(() -> {
+            if (mFilter != null) {
+                mFilter.releaseHandle();
+                mFilter = null;
+            }
             if (mNativeHandle != 0) {
                 nativeDestroy(mNativeHandle);
                 mNativeHandle = 0;

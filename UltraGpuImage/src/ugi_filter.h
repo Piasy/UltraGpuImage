@@ -18,18 +18,36 @@ enum TextureType {
     kTextureTypeMax,
 };
 
+enum FilterType {
+    kFilterGroup = 0,
+    kFilterPreprocess = 1,
+    kFilterColorInvert = 2,
+    kFilterBrightness = 3,
+};
+
 class Filter {
 public:
+    Filter();
+
+    virtual ~Filter();
+
     Filter(const GLchar* vertex_shader, const GLchar* fragment_shader);
 
-    virtual int Init();
+    static const GLchar* kDirectVertexShader;
+    static const GLchar* kDirectFragmentShader;
+
+    virtual int Init(int32_t output_width, int32_t output_height);
 
     virtual int Apply(TextureType type, GLuint texture_id, GLuint vao);
 
     virtual int Destroy();
 
+    virtual bool IsGroup();
+
 protected:
     GLuint CreateProgram(const GLchar* vertex_shader, const GLchar* fragment_shader);
+
+    virtual void PreDraw();
 
     int DoApply(GLuint program, TextureType type, GLuint texture_id, GLuint vao);
 

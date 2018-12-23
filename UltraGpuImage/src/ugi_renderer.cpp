@@ -5,27 +5,25 @@
 #include "ugi_renderer.h"
 
 #include "ugi_logging.h"
+#include "ugi_gl_utils.h"
 
 namespace Ugi {
 
-static constexpr GLuint kVertexIndices[] = {
-        0, 1, 3, 1, 2, 3,
-};
-
 Renderer::Renderer(Transformation transformation) : vao_(0), vbo_(0), ebo_(0),
-                                                    transformation_(transformation) {
+                                                    transformation_(transformation),
+                                                    filter_(nullptr) {
 }
 
 Renderer::~Renderer() {
 }
 
 void Renderer::OnSurfaceCreated() {
-    glGenVertexArrays(1, &vao_);
-
-    GLuint buffers[] = {0, 0};
-    glGenBuffers(2, buffers);
-    vbo_ = buffers[0];
-    ebo_ = buffers[1];
+    GLuint buffers[] = {0, 0, 0};
+    glGenVertexArrays(1, buffers);
+    glGenBuffers(2, buffers + 1);
+    vao_ = buffers[0];
+    vbo_ = buffers[1];
+    ebo_ = buffers[2];
 
     bindBuffers();
 
@@ -37,9 +35,9 @@ void Renderer::OnSurfaceDestroyed() {
         filter_->Destroy();
     }
 
-    GLuint buffers[] = {vbo_, ebo_};
-    glDeleteBuffers(2, buffers);
-    glDeleteVertexArrays(1, &vao_);
+    GLuint buffers[] = {vao_, vbo_, ebo_};
+    glDeleteVertexArrays(1, buffers);
+    glDeleteBuffers(2, buffers + 1);
 }
 
 void Renderer::UpdateTransformation(Transformation transformation) {
@@ -59,7 +57,8 @@ void Renderer::SetFilter(Filter* filter) {
 }
 
 void Renderer::RenderTexture(TextureType type, GLuint texture_id) {
-    if (!filter_ || filter_->Init() != 0) {
+    if (!filter_
+        || filter_->Init(transformation_.output_width(), transformation_.output_height()) != 0) {
         return;
     }
 
@@ -70,24 +69,7 @@ void Renderer::bindBuffers() {
     glViewport(0, 0, transformation_.output_width(), transformation_.output_height());
     transformation_.Resolve(vertex_attributes_);
 
-    glBindVertexArray(vao_);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_attributes_), vertex_attributes_, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(kVertexIndices), kVertexIndices,
-                 GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat),
-                          reinterpret_cast<const void*>(2 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
-
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    GlUtils::BindBuffers(vertex_attributes_, vao_, vbo_, ebo_);
 }
 
 }

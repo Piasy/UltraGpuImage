@@ -11,9 +11,7 @@ namespace Ugi {
 
 class PreprocessFilter : public Filter {
 public:
-    PreprocessFilter();
-
-    int Init() override;
+    int Init(int32_t output_width, int32_t output_height) override;
 
     int Apply(TextureType type, GLuint texture_id, GLuint vao) override;
 

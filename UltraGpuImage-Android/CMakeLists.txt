@@ -13,6 +13,7 @@ file(GLOB_RECURSE ugi_sources
         ../UltraGpuImage/src/ugi_renderer.cpp
         ../UltraGpuImage/src/ugi_transformation.cpp
         ../UltraGpuImage/src/ugi_filter.cpp
+        ../UltraGpuImage/src/ugi_gl_utils.cpp
         )
 
 add_library(
@@ -23,6 +24,7 @@ add_library(
         ${ugi_sources}
         ${ugi_filter_sources}
         src/main/cpp/ultra_gpu_image_jni.cpp
+        src/main/cpp/ultra_gpu_image_filters_jni.cpp
 )
 
 

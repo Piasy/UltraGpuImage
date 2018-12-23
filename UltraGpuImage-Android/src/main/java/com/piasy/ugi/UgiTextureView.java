@@ -132,6 +132,20 @@ public class UgiTextureView extends TextureView implements TextureView.SurfaceTe
         }
     }
 
+    public synchronized void notifyFilterUpdated() {
+        if (mRenderer != null && mSurfaceTexture != null
+            && mRenderMode == RENDER_MODE_PICTURE && mPictureTextureId != -1) {
+            mRenderer.renderRgb(mPictureTextureId, 0);
+        }
+    }
+
+    public synchronized void setFilter(UgiFilter filter) {
+        if (mRenderer != null) {
+            mRenderer.setFilter(filter);
+            notifyFilterUpdated();
+        }
+    }
+
     public synchronized void renderOes(int textureId) {
         if (mRenderer != null && mSurfaceTexture != null) {
             mRenderer.renderOes(textureId, 0);
