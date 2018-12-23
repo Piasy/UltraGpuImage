@@ -1,6 +1,6 @@
 # UltraGpuImage
 
-The ultimate 2D image renderer engine, inspired from [cats-oss/android-gpuimage](https://github.com/cats-oss/android-gpuimage), reinventing the wheel as my first OpenGL project after walking through the [Learn OpenGL](https://learnopengl.com/) tutorial.
+The ultimate 2D image rendering engine, inspired from [cats-oss/android-gpuimage](https://github.com/cats-oss/android-gpuimage), reinventing the wheel as my first OpenGL project after walking through the [Learn OpenGL](https://learnopengl.com/) tutorial.
 
 _This project is still under development, stay tuned!_
 
