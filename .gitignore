@@ -6,3 +6,9 @@
 **/build
 /captures
 **/.externalNativeBuild
+
+**/*.xcodeproj
+**/xcuserdata/
+**/Pods/
+
+libs/

@@ -16,11 +16,15 @@ UltraGpuImage has 3 layers:
 
 TODO
 
+### iOS project setup
+
+Install [yonaskolb/XcodeGen](https://github.com/yonaskolb/XcodeGen) and CocoaPods, then run `setup_xcode_project.sh`, then open `UltraGpuImage.xcworkspace` with Xcode.
+
 ## Check points
 
-+ [x] Android bitmap rendering
++ [x] Android Bitmap rendering
 + [x] Android OES camera preview
-+ [ ] iOS bitmap rendering
++ [x] iOS UIImage rendering
 + [ ] iOS camera preview
 + [ ] more filters
 + [ ] support other platforms

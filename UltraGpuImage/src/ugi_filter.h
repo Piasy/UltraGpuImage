@@ -14,7 +14,9 @@ namespace Ugi {
 
 enum TextureType {
     kTextureTypeRgb,
+#if defined(__ANDROID__)
     kTextureTypeOes,
+#endif
     kTextureTypeMax,
 };
 

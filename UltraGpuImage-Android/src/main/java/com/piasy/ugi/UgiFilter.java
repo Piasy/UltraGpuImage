@@ -7,7 +7,7 @@ import androidx.annotation.IntDef;
  *
  * Warning: instance can't be reused for multiple renderer.
  */
-public class UgiFilter {
+public abstract class UgiFilter {
     public static final int FILTER_GROUP = 0;
     public static final int FILTER_PREPROCESS = 1;
     public static final int FILTER_COLOR_INVERT = 2;

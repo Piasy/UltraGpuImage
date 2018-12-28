@@ -10,7 +10,7 @@ import androidx.annotation.NonNull;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import com.piasy.ugi.UgiTextureView;
+import com.piasy.ugi.UgiRendererView;
 import permissions.dispatcher.NeedsPermission;
 import permissions.dispatcher.RuntimePermissions;
 
@@ -40,12 +40,12 @@ public class SelectorActivity extends Activity {
 
     @OnClick(R.id.picture)
     void picture() {
-        startDemo(UgiTextureView.RENDER_MODE_PICTURE);
+        startDemo(UgiRendererView.RENDER_MODE_PICTURE);
     }
 
     @OnClick(R.id.camera)
     void camera() {
-        startDemo(UgiTextureView.RENDER_MODE_CAMERA_PREVIEW);
+        startDemo(UgiRendererView.RENDER_MODE_CAMERA_PREVIEW);
     }
 
     @NeedsPermission({

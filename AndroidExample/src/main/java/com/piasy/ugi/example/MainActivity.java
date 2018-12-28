@@ -21,7 +21,7 @@ import butterknife.ButterKnife;
 import butterknife.OnItemSelected;
 import butterknife.OnTextChanged;
 import com.piasy.ugi.UgiFilter;
-import com.piasy.ugi.UgiTextureView;
+import com.piasy.ugi.UgiRendererView;
 import com.piasy.ugi.UgiTransformation;
 import com.piasy.ugi.filters.UgiBrightnessFilter;
 import com.piasy.ugi.filters.UgiColorInvertFilter;
@@ -63,7 +63,7 @@ public class MainActivity extends Activity {
     );
 
     @BindView(R.id.surface)
-    UgiTextureView surface;
+    UgiRendererView surface;
 
     @BindView(R.id.cropX)
     EditText cropXEdit;
@@ -160,16 +160,16 @@ public class MainActivity extends Activity {
             }
         });
 
-        mRenderMode = getIntent().getIntExtra(MODE_EXTRA_KEY, UgiTextureView.RENDER_MODE_PICTURE);
+        mRenderMode = getIntent().getIntExtra(MODE_EXTRA_KEY, UgiRendererView.RENDER_MODE_PICTURE);
         int cameraFace = getIntent().getIntExtra(CAMERA_FACE_EXTRA_KEY,
                 Camera.CameraInfo.CAMERA_FACING_FRONT);
 
-        if (mRenderMode == UgiTextureView.RENDER_MODE_PICTURE) {
+        if (mRenderMode == UgiRendererView.RENDER_MODE_PICTURE) {
             Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.awesomeface);
             inputWidthEdit.setText(String.valueOf(bitmap.getWidth()));
             inputHeightEdit.setText(String.valueOf(bitmap.getHeight()));
 
-            surface.init(null, UgiTextureView.RENDER_MODE_PICTURE);
+            surface.initialize(null, UgiRendererView.RENDER_MODE_PICTURE);
             mTransformation = surface.getTransformation();
             surface.renderPicture(bitmap);
         } else {
@@ -192,8 +192,8 @@ public class MainActivity extends Activity {
                 parameters.setPreviewSize(cameraWidth, cameraHeight);
                 mCamera.setParameters(parameters);
 
-                surface.init(EglContextHacker.getContextFromEglBase(mEglBase),
-                        UgiTextureView.RENDER_MODE_CAMERA_PREVIEW);
+                surface.initialize(EglContextHacker.getContextFromEglBase(mEglBase),
+                        UgiRendererView.RENDER_MODE_CAMERA_PREVIEW);
                 mTransformation = surface.getTransformation();
                 surface.updateCameraInfo(cameraWidth, cameraHeight, info.orientation,
                         cameraFace == Camera.CameraInfo.CAMERA_FACING_FRONT, landscape);

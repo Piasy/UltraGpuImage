@@ -1,0 +1,20 @@
+name: iOSExample
+targets:
+  iOSExample:
+    type: application
+    platform: iOS
+    deploymentTarget: "9.0"
+    sources:
+      - path: iOSExample
+    dependencies:
+      - framework: "$(PROJECT_DIR)/../libs/UltraGpuImage_iOS.framework"
+        implicit: true
+    settings:
+      LIBRARY_SEARCH_PATHS: "$(inherited)"
+      OTHER_LDFLAGS: "$(inherited)"
+      FRAMEWORK_SEARCH_PATHS: "$(inherited) $(PROJECT_DIR)/../libs/"
+      CLANG_WARN_DOCUMENTATION_COMMENTS: "NO"
+      TARGETED_DEVICE_FAMILY: "1,2"
+      ENABLE_BITCODE: "NO"
+      ONLY_ACTIVE_ARCH: "NO"
+      VALID_ARCHS: "arm64"

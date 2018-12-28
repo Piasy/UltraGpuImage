@@ -95,8 +95,10 @@ int Filter::DoApply(GLuint program, TextureType type, GLuint texture_id, GLuint 
 
 GLenum Filter::textureType(TextureType type) {
     switch (type) {
+#if defined(__ANDROID__)
         case kTextureTypeOes:
             return GL_TEXTURE_EXTERNAL_OES;
+#endif
         case kTextureTypeRgb:
         default:
             return GL_TEXTURE_2D;
@@ -108,16 +110,39 @@ GLuint Filter::CreateProgram(const GLchar* vertex_shader_src, const GLchar* frag
     glShaderSource(vertex_shader, 1, &vertex_shader_src, nullptr);
     glCompileShader(vertex_shader);
 
+    int success;
+    char infoLog[512];
+    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(vertex_shader, 512, NULL, infoLog);
+        ugi_log(UGI_LOG_LEVEL_ERROR, "compile vertex shader error: %s", infoLog);
+        return 0;
+    }
+
     GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragment_shader, 1, &fragment_shader_src, nullptr);
     glCompileShader(fragment_shader);
+    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(fragment_shader, 512, NULL, infoLog);
+        ugi_log(UGI_LOG_LEVEL_ERROR, "compile fragment shader error: %s", infoLog);
+        return 0;
+    }
 
     GLuint program = glCreateProgram();
     glAttachShader(program, vertex_shader);
     glAttachShader(program, fragment_shader);
     glLinkProgram(program);
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(program, 512, NULL, infoLog);
+        ugi_log(UGI_LOG_LEVEL_ERROR, "link program error: %s", infoLog);
+        return 0;
+    }
 
+    glDetachShader(program, vertex_shader);
     glDeleteShader(vertex_shader);
+    glDetachShader(program, fragment_shader);
     glDeleteShader(fragment_shader);
 
     GLint tex_loc = glGetUniformLocation(program, "tex");

@@ -18,7 +18,9 @@ public:
     int Destroy() override;
 
 private:
+#if defined(__ANDROID__)
     GLuint oes_program_;
+#endif
 };
 
 }

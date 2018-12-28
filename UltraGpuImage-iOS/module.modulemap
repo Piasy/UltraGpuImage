@@ -1,0 +1,6 @@
+framework module UltraGpuImage_iOS {
+    umbrella header "UltraGpuImage_iOS.h"
+
+    export *
+    module * { export * }
+}

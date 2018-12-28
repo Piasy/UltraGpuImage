@@ -16,7 +16,7 @@ import com.piasy.ugi.egl.EglBase;
 /**
  * Created by Piasy{github.com/Piasy} on 2018/12/21.
  */
-public class UgiTextureView extends TextureView implements TextureView.SurfaceTextureListener {
+public class UgiRendererView extends TextureView implements TextureView.SurfaceTextureListener {
     public static final int RENDER_MODE_PICTURE = 1;
     public static final int RENDER_MODE_CAMERA_PREVIEW = 2;
 
@@ -35,15 +35,15 @@ public class UgiTextureView extends TextureView implements TextureView.SurfaceTe
 
     private TextureView.SurfaceTextureListener mSurfaceTextureListener;
 
-    public UgiTextureView(final Context context) {
+    public UgiRendererView(final Context context) {
         this(context, null);
     }
 
-    public UgiTextureView(final Context context, final AttributeSet attrs) {
+    public UgiRendererView(final Context context, final AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public UgiTextureView(final Context context, final AttributeSet attrs, final int defStyleAttr) {
+    public UgiRendererView(final Context context, final AttributeSet attrs, final int defStyleAttr) {
         super(context, attrs, defStyleAttr);
 
         super.setSurfaceTextureListener(this);
@@ -75,9 +75,14 @@ public class UgiTextureView extends TextureView implements TextureView.SurfaceTe
         GLES20.glDeleteTextures(1, textures, 0);
     }
 
-    public synchronized void init(EGLContext sharedContext, @RenderMode int renderMode) {
+    public void initialize(EGLContext sharedContext, @RenderMode int renderMode) {
+        initialize("", sharedContext, renderMode);
+    }
+
+    public synchronized void initialize(String name, EGLContext sharedContext,
+            @RenderMode int renderMode) {
         mRenderMode = renderMode;
-        mRenderer = new UgiRenderer(sharedContext, EglBase.CONFIG_PLAIN);
+        mRenderer = new UgiRenderer(name, sharedContext, EglBase.CONFIG_PLAIN);
         tryCreateRendererSurface();
     }
 
@@ -186,7 +191,7 @@ public class UgiTextureView extends TextureView implements TextureView.SurfaceTe
 
     private void tryUploadPicture() {
         mRenderer.runOnRenderThread(() -> {
-            synchronized (UgiTextureView.this) {
+            synchronized (UgiRendererView.this) {
                 if (mPicture != null && mSurfaceTexture != null) {
                     if (mPictureTextureId != -1) {
                         destroyTexture(mPictureTextureId);

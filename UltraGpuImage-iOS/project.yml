@@ -1,0 +1,25 @@
+name: UltraGpuImage-iOS
+targets:
+  UltraGpuImage_iOS:
+    type: framework
+    platform: iOS
+    deploymentTarget: "9.0"
+    sources:
+      - path: src
+    dependencies:
+      - framework: "$(PROJECT_DIR)/../libs/libUltraGpuImage.a"
+        implicit: true
+      - sdk: OpenGLES.framework
+    settings:
+      LIBRARY_SEARCH_PATHS: "$(inherited) $(PROJECT_DIR)/../libs"
+      FRAMEWORK_SEARCH_PATHS: "$(inherited)"
+      USER_HEADER_SEARCH_PATHS: "$(inherited) $(PROJECT_DIR)/../UltraGpuImage/src"
+      PRODUCT_BUNDLE_IDENTIFIER: "com.piasy.ugi.UltraGpuImage"
+      CONFIGURATION_BUILD_DIR: "$(PROJECT_DIR)/../libs/"
+      CLANG_WARN_DOCUMENTATION_COMMENTS: "NO"
+      ENABLE_BITCODE: "NO"
+      ONLY_ACTIVE_ARCH: "NO"
+      CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES: "YES"
+      DEFINES_MODULE: "YES"
+      SKIP_INSTALL: "YES"
+      VALID_ARCHS: "arm64"
